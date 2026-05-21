@@ -1,0 +1,11 @@
+*.env
+*.pyc
+*.so
+.cache/
+.pytest_cache
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+build/
+compile_commands.json

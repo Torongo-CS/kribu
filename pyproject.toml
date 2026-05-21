@@ -1,0 +1,29 @@
+[project]
+name = "kribu"
+version = "0.1.0"
+description = "Sholo Guti AI Engine"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "numpy",
+    "rich",
+    "nanobind"
+]
+
+[tool.ruff]
+line-length = 120
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "clang-format",
+    "cmakelang",
+    "mdformat-gfm"
+]
+
+[tool.pyright]
+include = ["python/src"]
+executionEnvironments = [
+  { root = "python/src" }
+]

@@ -1,0 +1,28 @@
+Checks: >
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  portability-*,
+  modernize-*,
+  readability-*,
+  misc-include-cleaner,
+  misc-definitions-in-headers,
+  misc-uniqueptr-reset-release,
+  misc-use-internal-linkage,
+  cppcoreguidelines-special-member-functions,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-avoid-goto,
+  -modernize-avoid-c-arrays,
+  -modernize-use-trailing-return-type,
+  -bugprone-throwing-static-initialization,
+  -clang-diagnostic-c2y-extensions
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(engine|bindings)/.*'
+ExcludeHeaderFilterRegex: '^(third_party|external|build)/.*'
+FormatStyle: file
+
+CheckOptions:
+  - key: readability-simplify-boolean-expr.ChainedConditionalReturn
+    value: 'true'
