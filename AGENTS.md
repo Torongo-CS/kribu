@@ -1,0 +1,1 @@
+- **Safe Deletion**: Never use `rm`, `rmdir`, `shred`, or `unlink`. Always use `trash-cli` (e.g., `trash ./filename`) to ensure files are moved to the trash rather than permanently deleted.

@@ -5,6 +5,9 @@
     "llvm-vs-code-extensions.vscode-clangd",
     "ms-vscode.cmake-tools",
     "usernamehw.errorlens",
-    "ms-vscode.makefile-tools"
+    "ms-vscode.makefile-tools",
+    "gruntfuggly.todo-tree",
+    "ms-python.debugpy",
+    "ms-python.vscode-python-envs"
   ]
 }
