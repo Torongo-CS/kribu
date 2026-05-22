@@ -7,7 +7,8 @@ dependencies = [
     "torch",
     "numpy",
     "rich",
-    "nanobind"
+    "nanobind",
+    "pylance>=6.0.1",
 ]
 
 [tool.ruff]
@@ -19,11 +20,14 @@ dev = [
     "ruff",
     "clang-format",
     "cmakelang",
-    "mdformat-gfm"
+    "mdformat-gfm",
+    "pre-commit"
 ]
 
 [tool.pyright]
 include = ["python/src"]
+extraPaths = ["python/src"]
 executionEnvironments = [
-  { root = "python/src" }
+  { root = "python/src", extraPaths = ["python/src"] }
 ]
+
