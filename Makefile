@@ -11,6 +11,7 @@ setup:
 	uv run cmake -B build -S .
 	# Link compile_commands.json to root for IDE support (VS Code / CLion)
 	ln -sf build/compile_commands.json .
+	uv run pre-commit install
 
 build:
 	uv run cmake -B build -S .
