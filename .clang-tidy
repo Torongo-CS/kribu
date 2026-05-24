@@ -13,16 +13,22 @@ Checks: >
   cppcoreguidelines-special-member-functions,
   cppcoreguidelines-init-variables,
   cppcoreguidelines-avoid-goto,
-  -modernize-avoid-c-arrays,
   -modernize-use-trailing-return-type,
   -bugprone-throwing-static-initialization,
-  -clang-diagnostic-c2y-extensions
+  -clang-diagnostic-c2y-extensions,
+  -readability-magic-numbers,
+  -bugprone-chained-comparison,
+  -portability-avoid-pragma-once,
+  -system-headers=false
 
-WarningsAsErrors: ''
-HeaderFilterRegex: '^(engine|bindings)/.*'
-ExcludeHeaderFilterRegex: '^(third_party|external|build)/.*'
-FormatStyle: file
+WarningsAsErrors: ""
+HeaderFilterRegex: "^(engine|bindings)/.*"
+ExcludeHeaderFilterRegex: '^(third_party|external|build|\.venv|.*test.*)/.*'
 
 CheckOptions:
   - key: readability-simplify-boolean-expr.ChainedConditionalReturn
-    value: 'true'
+    value: "true"
+  - key: readability-function-size.MaxNestingLevel
+    value: "4"
+  - key: readability-function-cognitive-complexity.Threshold
+    value: "15"

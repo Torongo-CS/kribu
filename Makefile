@@ -1,10 +1,11 @@
-.PHONY: setup build test test-cpp test-python clean format lint run
+.PHONY: setup build release hot-build test test-cpp test-python clean format lint run doc doc-view
 
 # Detect number of processors for parallel execution
 NPROC := $(shell nproc)
 
 export CC := clang
 export CXX := clang++
+PREFIX ?= ./dist
 
 setup:
 	uv sync
@@ -17,6 +18,16 @@ build:
 	uv run cmake -B build -S .
 	uv run cmake --build build -j$(NPROC)
 
+release:
+	trash build_release || true
+	uv run cmake -B build_release -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(PREFIX)
+	uv run cmake --build build_release -j$(NPROC)
+	uv run cmake --install build_release
+
+hot-build:
+	@command -v entr >/dev/null 2>&1 || (echo "Error: 'entr' is not installed. Please install it to use hot-build." && exit 1)
+	find engine bindings -name "*.cpp" -o -name "*.hpp" | entr -c uv run cmake --build build -j$(NPROC)
+
 test: test-cpp test-python
 
 test-cpp: build
@@ -25,18 +36,25 @@ test-cpp: build
 test-python:
 	PYTHONPATH=python/src uv run pytest python/tests/
 
-run: build
+run:
 	PYTHONPATH=python/src uv run python python/src/kribu/main.py
 
 format:
 	uv run ruff format python/
-	find engine bindings -name "*.cpp" -o -name "*.hpp" | xargs -P $(NPROC) uv run clang-format -i
+	find engine bindings \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" -o -name "*.cc" -o -name "*.cxx" -o -name "*.hh" -o -name "*.hxx" \) | xargs -P $(NPROC) uv run clang-format -i
 	find . -maxdepth 3 \( -name "CMakeLists.txt" -o -name "*.cmake" \) -not -path "*/build/*" -not -path "*/.venv/*" | xargs -P $(NPROC) uv run cmake-format -i
 	find . -maxdepth 2 -name "*.md" -not -path "*/.venv/*" | xargs -P $(NPROC) uv run mdformat
 
 lint:
 	uv run ruff check python/
-	find engine bindings -name "*.cpp" | xargs -P $(NPROC) clang-tidy -p build/ --quiet || true
+	find engine bindings \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" \) -not -path "*/build/*" | xargs -P $(NPROC) clang-tidy -p build/ --quiet --warnings-as-errors='*' -extra-arg=-w
 
 clean:
 	git clean -Xdf
+
+doc:
+	doxygen Doxyfile
+
+doc-view: doc
+	uv run python scripts/view_docs.py
+

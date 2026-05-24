@@ -7,19 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Enable compiler optimizations and warnings
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  add_compile_options(
-    -Wall
-    -Wextra
-    -Wpedantic
-    -O3
-    -march=native
-    -mtune=native
-    -ffast-math
-    -Wno-c2y-extensions)
-endif()
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-c2y-extensions)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_options(-O3 -march=native -mtune=native)
+  endif()
 endif()
 
 # Setup CPM

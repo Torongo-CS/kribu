@@ -1,19 +1,16 @@
 {
-    "python.languageServer": "Pylance",
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/python/src"
-    ],
-    "python.defaultInterpreterPath": ".venv/bin/python",
-    "python.envFile": "${workspaceFolder}/.env",
-    "editor.formatOnSave": true,
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff"
-    },
-    "[cpp]": {
-        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
-    },
-    "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}",
-        "--header-insertion=never"
-    ]
+  "python.languageServer": "Jedi",
+  "python.defaultInterpreterPath": ".venv/bin/python",
+  "python.envFile": "${workspaceFolder}/.env",
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[cpp]": {
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+  },
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}",
+    "--header-insertion=never"
+  ]
 }

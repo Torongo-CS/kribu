@@ -1,1 +1,16 @@
 - **Safe Deletion**: Never use `rm`, `rmdir`, `shred`, or `unlink`. Always use `trash-cli` (e.g., `trash ./filename`) to ensure files are moved to the trash rather than permanently deleted.
+- **Codebase**:
+  - Use C++ for all performance critical work as a shared library. Use C++20 standard.
+  - Use Python for UI and non-performance critical work.
+  - Use types shorthands from engine/include/kribu/types.hpp
+- **Naming**:
+  - Use snake_case for function name.
+  - Use camelCase for variable and class name.
+  - Use UPPER_CASE_WITH_UNDERSCORES for MACRO and CONSTANT.
+- **Principles**:
+  - **KISS**: Always prefer simplicity and clarity over premature optimization or unnecessary complexity.
+  - **YAGNI**: Do not add functionality until it is needed. Avoid speculative refactoring or over-engineering for hypothetical future requirements.
+  - **DRY**: Do not repeat yourself. Abstract common patterns and reuse code instead of duplicating it.
+- **Tests**: Every new feature must include tests. (`make test` to run all tests, `make test-cpp` to run C++ tests, `make test-python` to run Python tests.)
+- **Doc**: Use Doxygen style comments. Use it for all functions, classes, and macros.
+- **Agent**: When running long time consuming command wait for 60s not 10s.

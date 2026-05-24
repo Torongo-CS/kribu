@@ -8,5 +8,6 @@
 .venv/
 __pycache__/
 build/
+build_release/
 compile_commands.json
 .antigravitycli

@@ -1,13 +1,77 @@
-#include <nanobind/nanobind.h>
+/**
+ * @file kribu_ext.cpp
+ * @brief Python bindings for the Kribu Sholo Guti engine.
+ */
 
-#include "kribu/math.hpp"
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/vector.h>  // NOLINT(misc-include-cleaner)
+
+#include <cstddef>
+#include <kribu/board.hpp>
+#include <kribu/rules.hpp>
+#include <kribu/types.hpp>
+#include <vector>
 
 namespace nb = nanobind;
+using namespace kribu::board;
+using namespace kribu::sholoGuti;
 
-// NOLINTNEXTLINE(readability-identifier-length)
-NB_MODULE(kribu_ext, module) {
+/**
+ * @brief Converts a MoveList to a std::vector<int> for Python interop.
+ * @param state Current board state.
+ * @return Vector of valid move IDs.
+ */
+static std::vector<int> all_possible_moves_py(const boardState& state) {
+  MoveList moves = all_possible_moves(state);
+  std::vector<int> result;
+  result.reserve(static_cast<std::size_t>(moves.size()));
+  for (i16 mid : moves) {
+    result.push_back(static_cast<int>(mid));
+  }
+  return result;
+}
+
+/**
+ * @brief Binding module definition for kribu_ext.
+ */
+NB_MODULE(kribu_ext, module) {  // NOLINT(readability-identifier-length, modernize-avoid-c-arrays)
   module.doc() = "Kribu Sholo Guti AI extension module";
 
-  // Bind the dummy is_prime function to prove the toolchain works
-  module.def("is_prime", &kribu::is_prime, "Check if a number is prime using the fast C++ engine.");
+  module.attr("NUM_NODES") = NUM_NODES;
+  module.attr("TOTAL_MOVE_COUNT") = TOTAL_MOVE_COUNT;
+  module.attr("END_CHAIN_MOVE") = END_CHAIN_MOVE;
+  module.attr("NUM_SIMPLE_MOVES") = NUM_SIMPLE_MOVES;
+  module.attr("NUM_CAPTURE_MOVES") = NUM_CAPTURE_MOVES;
+  module.attr("MAX_MOVES_PER_STATE") = MAX_MOVES_PER_STATE;
+
+  nb::class_<boardState>(module, "boardState")
+      .def(nb::init<>())
+      .def_rw("me", &boardState::me)
+      .def_rw("opp", &boardState::opp)
+      .def_rw("activeCaptureIdx", &boardState::activeCaptureIdx)
+      .def("__eq__", &boardState::operator==);
+
+  nb::class_<move>(module, "move")
+      .def(nb::init<>())
+      .def_rw("fromNode", &move::from)
+      .def_rw("toNode", &move::to)
+      .def_rw("captured", &move::captured);
+
+  nb::enum_<GameStatus>(module, "GameStatus")
+      .value("OPP_WINS", GameStatus::OPP_WINS)
+      .value("ONGOING", GameStatus::ONGOING)
+      .value("ME_WINS", GameStatus::ME_WINS)
+      .export_values();
+
+  module.attr("INITIAL_STATE") = INITIAL_STATE;
+  module.def("piece_count", &piece_count, "Count pieces in a bitmask");
+  module.def("decode_move", &decode_move, "Decode a move ID into a Move object");
+  module.def("find_move", &find_move, "Find move ID for a (from, dst) node pair, or -1");
+  module.def("is_simple_move", &is_simple_move, "True if moveId is a simple (non-capture) move");
+  module.def("is_capture_move", &is_capture_move, "True if moveId is a capture move");
+  module.def("flip_board", &flip_board, "Flip the board 180 degrees and swap players");
+  module.def("is_valid", &is_valid, "Check if a move is valid for the given state");
+  module.def("all_possible_moves", &all_possible_moves_py, "Get all possible valid move IDs for the given state");
+  module.def("apply_move", &apply_move, "Apply a move and return the new state (no validity check)");
+  module.def("get_game_status", &get_game_status, "Get the full GameStatus enum value");
 }
