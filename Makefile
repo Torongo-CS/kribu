@@ -1,4 +1,4 @@
-.PHONY: setup build release hot-build test test-cpp test-python clean format lint run
+.PHONY: setup build release hot-build test test-cpp test-python clean format lint run doc doc-view
 
 # Detect number of processors for parallel execution
 NPROC := $(shell nproc)
@@ -51,3 +51,10 @@ lint:
 
 clean:
 	git clean -Xdf
+
+doc:
+	doxygen Doxyfile
+
+doc-view: doc
+	uv run python scripts/view_docs.py
+
