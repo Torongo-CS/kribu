@@ -1,4 +1,4 @@
-.PHONY: setup build release hot-build test test-cpp test-python clean format lint run doc doc-view
+.PHONY: setup build release hot-build test test-cpp test-python clean format lint run doc doc-view generate train
 
 # Detect number of processors for parallel execution
 NPROC := $(shell nproc)
@@ -38,6 +38,12 @@ test-python:
 
 run:
 	PYTHONPATH=python/src uv run python python/src/kribu/main.py
+
+generate:
+	PYTHONPATH=python/src uv run python python/src/kribu/generate_dataset.py --games 50 --output dataset.parquet --depth 4
+
+train:
+	PYTHONPATH=python/src uv run python python/src/kribu/train.py --dataset dataset.parquet --epochs 10
 
 format:
 	uv run ruff format python/

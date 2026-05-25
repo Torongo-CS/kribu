@@ -18,7 +18,7 @@ cpmaddpackage(
   1)
 
 # Engine tests will be added here
-add_executable(kribu_engine_tests tests/test_board.cpp)
+add_executable(kribu_engine_tests tests/test_board.cpp tests/test_minimax.cpp)
 target_link_libraries(kribu_engine_tests PRIVATE kribu_engine
                                                  Catch2::Catch2WithMain)
 
