@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <kribu/board.hpp>
+#include <kribu/minimax.hpp>
 #include <kribu/rules.hpp>
 #include <kribu/types.hpp>
 #include <vector>
@@ -29,6 +30,16 @@ static std::vector<int> all_possible_moves_py(const boardState& state) {
     result.push_back(static_cast<int>(mid));
   }
   return result;
+}
+
+/**
+ * @brief Helper function to run minimax search with default infinity bounds.
+ * @param state Current board state.
+ * @param depth Search depth limit.
+ * @return MinimaxResult structure with the best evaluation score and move ID.
+ */
+static MinimaxResult minimax_py(const boardState& state, int depth) {
+  return minimax(state, depth, -INFINITY_VAL, INFINITY_VAL);
 }
 
 /**
@@ -74,4 +85,11 @@ NB_MODULE(kribu_ext, module) {  // NOLINT(readability-identifier-length, moderni
   module.def("all_possible_moves", &all_possible_moves_py, "Get all possible valid move IDs for the given state");
   module.def("apply_move", &apply_move, "Apply a move and return the new state (no validity check)");
   module.def("get_game_status", &get_game_status, "Get the full GameStatus enum value");
+
+  nb::class_<MinimaxResult>(module, "MinimaxResult")
+      .def(nb::init<>())
+      .def_rw("score", &MinimaxResult::score)
+      .def_rw("moveId", &MinimaxResult::moveId);
+
+  module.def("minimax", &minimax_py, nb::arg("state"), nb::arg("depth"), "Run minimax search and return MinimaxResult");
 }
