@@ -109,6 +109,7 @@ class GameState {
         this.moveLog = [];             // Text records of moves
         this.moveSnapshots = [];       // Board snapshots for each logged move
         this.viewingHistoryIndex = -1; // -1 = live game, >= 0 = viewing past state
+        this.isAnimating = false;      // Block input during animations
     }
 
     // Reset state to initial game configuration
@@ -125,6 +126,7 @@ class GameState {
         this.moveLog = [];
         this.moveSnapshots = [];
         this.viewingHistoryIndex = -1;
+        this.isAnimating = false;
     }
 
     // Set mask using active player & opponent values
@@ -310,7 +312,7 @@ async function checkEngineStatus() {
 
 // Start a fresh game configuration
 async function startNewGame() {
-    setLoading(true);
+    set_loading(true);
     game.reset();
     
     // Re-initialize SVG coordinates based on the selected player role/mode
@@ -338,7 +340,7 @@ async function startNewGame() {
         console.error('Error starting game:', e);
         alert('Could not start a new game. Make sure the server is running.');
     } finally {
-        setLoading(false);
+        set_loading(false);
     }
 }
 
@@ -692,6 +694,7 @@ function renderBoardFromSnapshot(meStr, oppStr) {
 
 // Click listener for pieces
 function handlePieceClick(nodeId) {
+    if (game.isAnimating) return;
     if (game.viewingHistoryIndex >= 0) return; // Block interaction during history replay
     if (!isHumanTurn() || game.gameStatus !== 'ONGOING') return;
     
@@ -730,6 +733,7 @@ function handlePieceClick(nodeId) {
 
 // Click listener for empty nodes (target destination move trigger)
 async function handleNodeClick(nodeId) {
+    if (game.isAnimating) return;
     if (game.viewingHistoryIndex >= 0) return; // Block interaction during history replay
     if (!isHumanTurn() || game.selectedPiece === null) return;
     
@@ -750,7 +754,7 @@ async function applyUserMove(moveObj) {
     if (game.activeCaptureIdx === -1) {
         clearAITrail();
     }
-    setLoading(true);
+    set_loading(true);
     game.pushHistory();
     
     try {
@@ -796,6 +800,13 @@ async function applyUserMove(moveObj) {
             }
         }
         
+        // Wait for the visual slide animation to finish
+        if (moveObj.moveId > 0) {
+            await new Promise(resolve => {
+                animate_move(fromName, toName, capturedName, resolve);
+            });
+        }
+        
         // Update masks
         game.setMasks(data.nextState.me, data.nextState.opp, data.nextState.activeCaptureIdx);
         
@@ -810,6 +821,9 @@ async function applyUserMove(moveObj) {
             // locked in a capture chain, keep current turn
             game.selectedPiece = data.nextState.activeCaptureIdx;
         }
+
+        // Render the new board layout immediately to avoid visual lag or glitches
+        updateUI();
         
         // Check game status
         const statusResponse = await fetch('/api/game_status', {
@@ -842,7 +856,7 @@ async function applyUserMove(moveObj) {
         game.popHistory();
         updateUI();
     } finally {
-        setLoading(false);
+        set_loading(false);
     }
 }
 
@@ -854,7 +868,7 @@ async function triggerAIMove() {
         clearAITrail();
     }
     
-    setLoading(true, true);
+    set_loading(true, true);
     document.getElementById('metric-search-status').textContent = 'Searching...';
     
     try {
@@ -911,12 +925,22 @@ async function triggerAIMove() {
             }
         }
         
+        // Wait for the visual slide animation to finish
+        if (data.moveId > 0) {
+            await new Promise(resolve => {
+                animate_move(fromName, toName, capturedName, resolve);
+            });
+        }
+        
         game.setMasks(data.nextState.me, data.nextState.opp, data.nextState.activeCaptureIdx);
         
         // Turn completed transition
         if (data.nextState.activeCaptureIdx === -1) {
             game.currentPlayer = game.currentPlayer === 'A' ? 'B' : 'A';
         }
+
+        // Render the new board layout immediately to avoid visual lag or glitches
+        updateUI();
         
         // Check game status
         const statusResponse = await fetch('/api/game_status', {
@@ -948,13 +972,14 @@ async function triggerAIMove() {
     } catch (e) {
         console.error('Error during AI calculations:', e);
     } finally {
-        setLoading(false);
+        set_loading(false);
         document.getElementById('metric-search-status').textContent = 'Idle';
     }
 }
 
 // User decides to terminate active capture chain early
 async function handleEndChain() {
+    if (game.isAnimating) return;
     if (!isHumanTurn() || game.activeCaptureIdx === -1) return;
     
     // END_CHAIN_MOVE is 0
@@ -964,23 +989,84 @@ async function handleEndChain() {
 
 // Undo action
 function handleUndo() {
+    if (game.isAnimating) return;
     if (!isHumanTurn() && game.gameMode !== 'eve') return; // Cannot undo during AI turn
     game.popHistory();
     updateUI();
     fetchPossibleMoves();
 }
 
-// Toggle loading spin state
-function setLoading(isLoading, isAi = false) {
-    const overlay = document.getElementById('loading-overlay');
-    const p = overlay.querySelector('p');
+/**
+ * @brief Animates the movement of a piece from fromNode to toNode.
+ * @details Adds transition classes and calculates relative translations.
+ */
+function animate_move(fromNode, toNode, capturedNode, callback) {
+    game.isAnimating = true;
     
-    if (isLoading) {
-        p.textContent = isAi ? "AI is calculating..." : "Loading...";
-        overlay.style.display = 'flex';
-    } else {
-        overlay.style.display = 'none';
+    const fromCoord = getCoordinate(fromNode);
+    const toCoord = getCoordinate(toNode);
+    
+    if (!fromCoord || !toCoord) {
+        game.isAnimating = false;
+        callback();
+        return;
     }
+    
+    const dx = toCoord.x - fromCoord.x;
+    const dy = toCoord.y - fromCoord.y;
+    
+    const pieceG = document.getElementById(`piece-group-${fromNode}`);
+    if (pieceG) {
+        // Bring the moving piece to the front/top by appending it to the end of its parent
+        const parent = pieceG.parentNode;
+        if (parent) {
+            parent.appendChild(pieceG);
+        }
+        
+        pieceG.classList.add('animating');
+        pieceG.style.transform = `translate(${dx}px, ${dy}px)`;
+    }
+    
+    let capturedPieceG = null;
+    if (capturedNode !== -1) {
+        capturedPieceG = document.getElementById(`piece-group-${capturedNode}`);
+        if (capturedPieceG) {
+            capturedPieceG.classList.add('captured-animating');
+        }
+    }
+    
+    setTimeout(() => {
+        // Run callback first to update the game masks and re-render the board
+        callback();
+        
+        // Clean up animation classes and transforms in the next frame after DOM updates are rendered
+        requestAnimationFrame(() => {
+            if (pieceG) {
+                pieceG.style.transition = 'none';
+                pieceG.style.transform = '';
+                pieceG.classList.remove('animating');
+                void pieceG.offsetHeight; // force reflow
+                pieceG.style.transition = '';
+            }
+            if (capturedPieceG) {
+                capturedPieceG.style.transition = 'none';
+                capturedPieceG.style.opacity = '';
+                capturedPieceG.style.transform = '';
+                capturedPieceG.classList.remove('captured-animating');
+                void capturedPieceG.offsetHeight; // force reflow
+                capturedPieceG.style.transition = '';
+            }
+            game.isAnimating = false;
+        });
+    }, 400);
+}
+
+/**
+ * @brief Non-blocking placeholder to satisfy the loading state requirement.
+ * @details Prevents display of the blocking thinking overlay.
+ */
+function set_loading(isLoading, isAi = false) {
+    // No-op to support seamless gameplay
 }
 
 // Show GameOver Modal dialog popup

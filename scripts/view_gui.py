@@ -50,6 +50,15 @@ class GUIHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     @brief Request handler processing static files and custom board API endpoints.
     """
 
+    def end_headers(self) -> None:
+        """
+        @brief Sends headers and includes cache-control headers to prevent browser caching.
+        """
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     def do_GET(self) -> None:
         # Serve the home index file by default
         if self.path == "/" or self.path == "/index.html":
